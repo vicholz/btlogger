@@ -264,14 +264,14 @@ async function openDevice(address) {
     <h3>Latest packet</h3>
     <div class="hex">${d.last_payload_hex || ""}</div>
     <p class="hint">${fields.map((f) => f.type + (f.text ? `: ${f.text}` : "") + (f.company ? `: ${f.company}` : "")).join(" · ")}</p>
+    <h3>When this device is seen</h3>
+    ${heat}
     <h3>Visit history</h3>
     ${(visits.visits || []).map((v) => `
       <div class="visit ${v.open ? "open" : ""}">
         <div>${fmtTime(v.start_time)} → ${v.end_time ? fmtTime(v.end_time) : "now"}</div>
         <div class="dur">${v.duration_human}${v.open ? " · open" : ""}</div>
       </div>`).join("") || "<p class='hint'>No visits yet.</p>"}
-    <h3>When this device is seen</h3>
-    ${heat}
     <h3>Recent sightings</h3>
     ${(hist.sightings || []).slice(0, 25).map((s) => `
       <div class="visit"><div>${fmtTime(s.time)} · ${s.adv_type || ""}</div><div class="rssi">${rssiLabel(s.rssi)}</div></div>
