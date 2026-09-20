@@ -1,0 +1,83 @@
+services:
+  timescaledb:
+    image: timescale/timescaledb:2.17.2-pg16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-btlogger}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-btlogger}
+      POSTGRES_DB: ${POSTGRES_DB:-btlogger}
+    ports:
+      - "5432:5432"
+    volumes:
+      - timescaledb_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-btlogger} -d ${POSTGRES_DB:-btlogger}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-btlogger}:${POSTGRES_PASSWORD:-btlogger}@timescaledb:5432/${POSTGRES_DB:-btlogger}
+      DATA_DIR: /app/data
+      IN_RANGE_SECONDS: ${IN_RANGE_SECONDS:-30}
+      VISIT_GAP_SECONDS: ${VISIT_GAP_SECONDS:-120}
+    ports:
+      - "${API_PORT:-8080}:8080"
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+
+  scanner:
+    build:
+      context: .
+      dockerfile: scanner/Dockerfile
+    restart: unless-stopped
+    # Host network so BlueZ/DBus and /dev/ttyACM* work without extra USB/DBus mapping.
+    network_mode: host
+    privileged: true
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-btlogger}:${POSTGRES_PASSWORD:-btlogger}@127.0.0.1:5432/${POSTGRES_DB:-btlogger}
+      DATA_DIR: /app/data
+      SCANNER_BACKEND: ${SCANNER_BACKEND:-auto}
+      SERIAL_PORT: ${SERIAL_PORT:-/dev/ttyACM0}
+      SERIAL_BAUD: ${SERIAL_BAUD:-115200}
+      HCI_ADAPTER: ${HCI_ADAPTER:-}
+      SIGHTING_MIN_INTERVAL_MS: ${SIGHTING_MIN_INTERVAL_MS:-1000}
+      IN_RANGE_SECONDS: ${IN_RANGE_SECONDS:-30}
+      VISIT_GAP_SECONDS: ${VISIT_GAP_SECONDS:-120}
+    volumes:
+      - /dev:/dev
+      - /var/run/dbus:/var/run/dbus
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+
+  grafana:
+    image: grafana/grafana:11.4.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-btlogger}
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_DEFAULT_THEME: dark
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/overview.json
+    ports:
+      - "${GRAFANA_PORT:-3000}:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      timescaledb:
+        condition: service_healthy
+
+volumes:
+  timescaledb_data:
+  grafana_data:

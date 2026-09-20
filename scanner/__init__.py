@@ -1,0 +1,1 @@
+"""BLE advertisement ingest service."""

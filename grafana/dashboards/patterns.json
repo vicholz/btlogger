@@ -1,0 +1,44 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "id": null,
+  "panels": [
+    {
+      "id": 1,
+      "type": "table",
+      "title": "Hour-of-week sighting counts",
+      "gridPos": { "h": 16, "w": 24, "x": 0, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "btlogger-tsdb" },
+      "targets": [
+        {
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "SELECT EXTRACT(DOW FROM time)::int AS dow, EXTRACT(HOUR FROM time)::int AS hour, COUNT(*) AS sightings, COUNT(DISTINCT device_id) AS devices FROM sightings WHERE $__timeFilter(time) GROUP BY 1, 2 ORDER BY 1, 2;",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "table",
+      "title": "Repeat visitors",
+      "gridPos": { "h": 10, "w": 24, "x": 0, "y": 16 },
+      "datasource": { "type": "postgres", "uid": "btlogger-tsdb" },
+      "targets": [
+        {
+          "rawQuery": true,
+          "format": "table",
+          "rawSql": "SELECT address, name, device_type, visit_count, total_dwell_seconds, first_seen, last_seen FROM devices WHERE visit_count >= 2 ORDER BY visit_count DESC, total_dwell_seconds DESC LIMIT 100;",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 39,
+  "tags": ["btlogger"],
+  "time": { "from": "now-7d", "to": "now" },
+  "title": "btlogger patterns",
+  "uid": "btlogger-patterns",
+  "version": 1
+}

@@ -1,0 +1,147 @@
+{
+  "annotations": { "list": [] },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [],
+  "liveNow": true,
+  "panels": [
+    {
+      "id": 1,
+      "type": "stat",
+      "title": "Devices ever seen",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "btlogger-tsdb" },
+      "targets": [
+        {
+          "datasource": { "type": "postgres", "uid": "btlogger-tsdb" },
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) AS value FROM devices;",
+          "refId": "A"
+        }
+      ],
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false }, "colorMode": "background", "graphMode": "none", "justifyMode": "auto", "textMode": "auto" }
+    },
+    {
+      "id": 2,
+      "type": "stat",
+      "title": "Present now (30s)",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "btlogger-tsdb" },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) AS value FROM devices WHERE last_seen > NOW() - INTERVAL '30 seconds';",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "stat",
+      "title": "Total time seen",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "btlogger-tsdb" },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COALESCE(SUM(total_dwell_seconds),0) AS value FROM devices;",
+          "format": "table",
+          "refId": "A"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": { "unit": "s" },
+        "overrides": []
+      }
+    },
+    {
+      "id": 4,
+      "type": "stat",
+      "title": "Repeat visitors",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "datasource": { "type": "postgres", "uid": "btlogger-tsdb" },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(*) AS value FROM devices WHERE visit_count >= 2;",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Sightings",
+      "gridPos": { "h": 8, "w": 16, "x": 0, "y": 4 },
+      "datasource": { "type": "postgres", "uid": "btlogger-tsdb" },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT time_bucket('1 minute', time) AS time, COUNT(*)::int AS sightings FROM sightings WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1;",
+          "format": "time_series",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Unique devices per minute",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 4 },
+      "datasource": { "type": "postgres", "uid": "btlogger-tsdb" },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT time_bucket('1 minute', time) AS time, COUNT(DISTINCT device_id)::int AS devices FROM sightings WHERE $__timeFilter(time) GROUP BY 1 ORDER BY 1;",
+          "format": "time_series",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "table",
+      "title": "Longest total time seen",
+      "gridPos": { "h": 10, "w": 12, "x": 0, "y": 12 },
+      "datasource": { "type": "postgres", "uid": "btlogger-tsdb" },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT address, name, device_type, manufacturer_name, visit_count, total_dwell_seconds, last_seen FROM devices ORDER BY total_dwell_seconds DESC LIMIT 30;",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "type": "table",
+      "title": "Last seen",
+      "gridPos": { "h": 10, "w": 12, "x": 12, "y": 12 },
+      "datasource": { "type": "postgres", "uid": "btlogger-tsdb" },
+      "targets": [
+        {
+          "rawQuery": true,
+          "rawSql": "SELECT address, name, device_type, last_rssi, last_seen, visit_count, total_dwell_seconds FROM devices ORDER BY last_seen DESC LIMIT 50;",
+          "format": "table",
+          "refId": "A"
+        }
+      ]
+    }
+  ],
+  "refresh": "10s",
+  "schemaVersion": 39,
+  "tags": ["btlogger", "ble"],
+  "templating": { "list": [] },
+  "time": { "from": "now-12h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "btlogger overview",
+  "uid": "btlogger-overview",
+  "version": 1
+}

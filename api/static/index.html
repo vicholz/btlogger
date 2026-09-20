@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>btlogger</title>
+  <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+  <header class="top">
+    <div class="brand">
+      <span class="mark">bt</span>
+      <div>
+        <h1>btlogger</h1>
+        <p class="tag">BLE sighting log · nRF52840 / BlueZ</p>
+      </div>
+    </div>
+    <div class="kpis" id="kpis"></div>
+  </header>
+
+  <nav class="tabs" id="tabs">
+    <button data-view="live" class="active">In range</button>
+    <button data-view="devices">Devices</button>
+    <button data-view="repeats">Repeats</button>
+    <button data-view="window">Time window</button>
+    <button data-view="distance">Distance</button>
+    <button data-view="patterns">Patterns</button>
+    <button data-view="report">Report</button>
+  </nav>
+
+  <section class="toolbar" id="toolbar">
+    <input id="q" type="search" placeholder="Search MAC, name, type, manufacturer">
+    <select id="order">
+      <option value="last_seen">Last seen</option>
+      <option value="distance">Closest</option>
+      <option value="dwell">Time seen</option>
+      <option value="visits">Visit count</option>
+      <option value="rssi">RSSI</option>
+      <option value="first_seen">First seen</option>
+      <option value="name">Name</option>
+    </select>
+    <select id="type-filter"><option value="">All types</option></select>
+    <label class="when">Room
+      <select id="env">
+        <option value="indoor">Indoor</option>
+        <option value="open">Open air</option>
+        <option value="dense">Dense indoor</option>
+        <option value="custom">Custom n</option>
+      </select>
+    </label>
+    <label class="when" title="Path-loss exponent">n <input id="path-n" type="number" min="1" max="6" step="0.1" value="2.7"></label>
+    <label class="when" title="RSSI at 1 meter, dBm">1 m <input id="tx-power" type="number" min="-100" max="20" step="1" value="-59"> dBm</label>
+    <label class="when">From <input id="since" type="datetime-local"></label>
+    <label class="when">To <input id="until" type="datetime-local"></label>
+    <button id="reload" type="button">Refresh</button>
+  </section>
+
+  <main>
+    <section id="list-view">
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Address</th>
+              <th>Name / type</th>
+              <th>Manufacturer</th>
+              <th>RSSI</th>
+              <th>~Distance</th>
+              <th>This visit</th>
+              <th>Total seen</th>
+              <th>Visits</th>
+              <th>Last seen</th>
+            </tr>
+          </thead>
+          <tbody id="rows"></tbody>
+        </table>
+      </div>
+      <p class="hint" id="list-hint"></p>
+    </section>
+
+    <section id="distance-view" class="hidden">
+      <h2>Report by approximate distance</h2>
+      <p class="hint">RSSI path-loss estimate, not a tape measure. Calibrate “1 m” with a phone held one meter from the radio. Change bins to regroup the table.</p>
+      <div class="toolbar inner">
+        <label class="when">Bins (meters) <input id="dist-bins" type="text" value="1,3,8" placeholder="1,3,8"></label>
+        <label class="when"><input id="dist-present" type="checkbox"> In range only</label>
+        <button id="dist-run" type="button">Update report</button>
+      </div>
+      <div id="distance-report"></div>
+    </section>
+
+    <section id="pattern-view" class="hidden">
+      <h2>When devices appear</h2>
+      <p class="hint">Hour of day × day of week, last 14 days. Darker cells mean more sightings.</p>
+      <div id="heatmap" class="heatmap"></div>
+    </section>
+
+    <section id="report-view" class="hidden">
+      <h2>Sighting report</h2>
+      <div id="report"></div>
+    </section>
+  </main>
+
+  <aside id="drawer" class="drawer hidden" aria-live="polite">
+    <button class="close" id="close-drawer" type="button">Close</button>
+    <div id="detail"></div>
+  </aside>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
